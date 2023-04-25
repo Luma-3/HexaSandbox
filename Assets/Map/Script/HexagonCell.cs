@@ -1,13 +1,12 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class HexagonGenarator : MonoBehaviour
+public class HexagonCell : MonoBehaviour
 {
     private readonly int radius = 1;
     private readonly int vertices = 6;
 
-    public List<HexagonGenarator> neighbors = new();
+    [SerializeField] HexagonCell[] neighbors;
 
     public void GenerateMesh()
     {
@@ -22,7 +21,7 @@ public class HexagonGenarator : MonoBehaviour
         {
             float x = radius * Mathf.Cos(i * 2 * Mathf.PI / this.vertices);
             float y = radius * Mathf.Sin(i * 2 * Mathf.PI / this.vertices);
-            vertices[i] = new Vector3(x, 0, -y);
+            vertices[i] = new Vector3(y, 0, x);
         }
 
         int triangleIndex = 0;
@@ -38,11 +37,15 @@ public class HexagonGenarator : MonoBehaviour
         mesh.RecalculateNormals();
     }
 
-    public void SetHeight(float height)
+    public HexagonCell GetNeighbor (HexaDirection direction) // public methode for retrieve cell's neightbor (voisin)
     {
-        Vector3 position = transform.position;
-        position.y = height;
-        transform.position = position;
+        return neighbors[(int)direction];
+    }
+
+    public void SetNieghbor (HexaDirection direction, HexagonCell cell)
+    {
+        neighbors[(int)direction] = cell;
+        cell.neighbors[(int)direction.Opposite()] = this;
     }
 
 }
