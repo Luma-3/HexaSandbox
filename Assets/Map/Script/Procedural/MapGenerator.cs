@@ -11,12 +11,16 @@ public class MapGenerator : MonoBehaviour
     public float noiseScale;
     public int octaves;
     public float lacunarity;
-    public float persistence;
+    [Range(0.1f,1f)]public float persistence;
+    public float ampliHeight;
+    public int seed;
+    public Vector2 offset;
 
     [Header("Hexagonal")]
     public HexagonCell hexPrefab;
     public TextMeshProUGUI labelHexPrefab;
-    public float ampliHeight;
+
+    public bool autoUpdate;
 
     private readonly float hexSize = 1f;
     Canvas gridCanvas;
@@ -25,13 +29,19 @@ public class MapGenerator : MonoBehaviour
 
 
     public void GenerateMap()
-    {
-        float[,] noiseMap = Noise.GenerateNoiseMap(width, height, noiseScale, octaves, lacunarity, persistence);
+    { 
 
-        MapDisplay display = FindAnyObjectByType<MapDisplay>();
-        display.DrawNoiseMap(noiseMap);
+        float[,] noiseMap = GenerateNoiseMap();
+        //MapDisplay display = FindAnyObjectByType<MapDisplay>();
+        //display.DrawNoiseMap(noiseMap);
 
         GenerateGrid(noiseMap);
+    }
+
+    public float[,] GenerateNoiseMap()
+    {
+        float[,] noiseMap = Noise.GenerateNoiseMap(width, height, seed, noiseScale, octaves, lacunarity, persistence, offset);
+        return noiseMap;
     }
 
     public void GenerateGrid(float[,] noiseMap)
@@ -51,7 +61,7 @@ public class MapGenerator : MonoBehaviour
                 Vector3 cellPos = SetPositionCell(cell, x, y, noiseMap);
                 cell.GenerateSurface();
 
-                CreateLabelCell(cell, cellPos, x, y);
+                CreateLabelCell(cell, cellPos);
             }
         }
 
@@ -105,6 +115,20 @@ public class MapGenerator : MonoBehaviour
         
     }
 
+    private void CreateLabelCell(HexagonCell cell, Vector3 cellPos)
+    {
+        TextMeshProUGUI label = Instantiate(labelHexPrefab);
+        cell.label = label;
+        label.rectTransform.SetParent(gridCanvas.transform, false);
+
+        label.text = cell.coordinates.ToStringOnSeparateLines();
+
+        label.rectTransform.localPosition =
+            new Vector3(cellPos.x, cellPos.z, -cellPos.y);
+    }
+
+
+
     private Vector3 SetPositionCell(HexagonCell cell, int x, int y, float[,] noiseMap)
     {
         float hexHeight = noiseMap[x, y];
@@ -117,14 +141,33 @@ public class MapGenerator : MonoBehaviour
         return cell.transform.position;
     }
 
-    private void CreateLabelCell(HexagonCell cell, Vector3 cellPos, int x, int y)
+    
+
+    public void AutoUpdate()
     {
-        TextMeshProUGUI label = Instantiate(labelHexPrefab);
-        label.rectTransform.SetParent(gridCanvas.transform, false);
+        float[,] noiseMap = GenerateNoiseMap();
 
-        label.text = cell.coordinates.ToStringOnSeparateLines();
+        for (int y = 0, c = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                SetPositionCell(cells[c], x, y, noiseMap);
+                cells[c].label.rectTransform.localPosition = new Vector3(cells[c].transform.localPosition.x, cells[c].transform.localPosition.z, -cells[c].transform.localPosition.y);
+                c++;
+            }
+        }
 
-        label.rectTransform.localPosition =
-            new Vector3(cellPos.x, cellPos.z, -cellPos.y);
+        for (int i = 0; i < cells.Length; i++)
+        {
+            cells[i].UpdateQuad();
+        }
+    }
+
+    private void OnValidate()
+    {
+        if (height < 1) { height = 1; }
+        if (width < 1) { width = 1; }
+        if (noiseScale < 1) { noiseScale = 1;}
+        if (octaves < 0) { octaves = 0; }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -7,6 +8,7 @@ public class HexagonCell : MonoBehaviour
     
     
     public HexaCoordinates coordinates;
+    public TextMeshProUGUI label;
 
     private readonly int radius = 1;
     private readonly int numberOfVertices = 6;
