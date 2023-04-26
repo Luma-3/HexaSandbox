@@ -18,5 +18,9 @@ public class MapGeneratorEditor : Editor
 
             mapGen.GenerateMap();
         }
+        else if (GUILayout.Button("Update"))
+        {
+            mapGen.Generate2nd();
+        }
     }
 }

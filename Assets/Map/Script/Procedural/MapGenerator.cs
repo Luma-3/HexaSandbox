@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 public class MapGenerator : MonoBehaviour
 {
@@ -50,9 +49,21 @@ public class MapGenerator : MonoBehaviour
                 HexagonCell cell = CreateCell(x, y, i++);
                 //Set Position and height of the hexagon
                 Vector3 cellPos = SetPositionCell(cell, x, y, noiseMap);
+                cell.GenerateSurface();
 
-                CreateLabelCell(cellPos, x, y);
+                CreateLabelCell(cell, cellPos, x, y);
             }
+        }
+
+        Generate2nd();
+
+    }
+
+    public void Generate2nd()
+    {
+        for (int i = 0; i < cells.Length; i++)
+        {
+            cells[i].UpdateQuad();
         }
     }
 
@@ -63,10 +74,31 @@ public class MapGenerator : MonoBehaviour
 
         cell.transform.localScale = new Vector3(hexSize, hexSize, hexSize);
         cell.GenerateMesh();
+        
+        cell.coordinates = HexaCoordinates.FromOffsetCoordinates(x, y);
 
         if (x > 0)
         {
             cell.SetNieghbor(HexaDirection.W, cells[countCell - 1]);
+        }
+        if (y > 0)
+        {
+            if ((y & 1) == 0) 
+            {
+                cell.SetNieghbor(HexaDirection.SE, cells[countCell - width]);
+                if (x > 0)
+                {
+                    cell.SetNieghbor(HexaDirection.SW, cells[countCell - width - 1]);
+                }
+            }
+            else 
+            {
+                cell.SetNieghbor(HexaDirection.SW, cells[countCell - width]);
+                if (x < width - 1)
+                {
+                    cell.SetNieghbor(HexaDirection.SE, cells[countCell - width + 1]);
+                }
+            }
         }
 
         return cell;
@@ -85,12 +117,12 @@ public class MapGenerator : MonoBehaviour
         return cell.transform.position;
     }
 
-    private void CreateLabelCell(Vector3 cellPos, int x, int y)
+    private void CreateLabelCell(HexagonCell cell, Vector3 cellPos, int x, int y)
     {
         TextMeshProUGUI label = Instantiate(labelHexPrefab);
         label.rectTransform.SetParent(gridCanvas.transform, false);
 
-        label.text = x.ToString() + "\n" + y.ToString();
+        label.text = cell.coordinates.ToStringOnSeparateLines();
 
         label.rectTransform.localPosition =
             new Vector3(cellPos.x, cellPos.z, -cellPos.y);
