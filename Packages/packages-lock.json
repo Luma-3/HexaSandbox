@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.singularitygroup.hotreload": {
+      "version": "git+https://gitlab.hotreload.net/root/hot-reload-releases.git#1.9.4",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e4582bfa5276017ccb0814813fc1c6961e0436a3"
+    },
     "com.unity.collab-proxy": {
       "version": "2.0.3",
       "depth": 0,

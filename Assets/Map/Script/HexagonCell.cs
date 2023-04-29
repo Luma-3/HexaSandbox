@@ -93,8 +93,6 @@ public class HexagonCell : MonoBehaviour
         mesh.triangles = triangles.ToArray();
         mesh.RecalculateNormals();
 
-
-
     }
 
     public void UpdateQuad()

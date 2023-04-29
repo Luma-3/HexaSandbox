@@ -12,19 +12,13 @@ public class MapGeneratorEditor : Editor
 
         if (DrawDefaultInspector() && mapGen.autoUpdate)
         {
-            mapGen.AutoUpdate();
-            //mapGen.GenerateMap();
+            mapGen.GenerateMap();
         }
 
 
         if (GUILayout.Button("Generate"))
         {
-
             mapGen.GenerateMap();
-        }
-        else if (GUILayout.Button("Update"))
-        {
-            mapGen.Generate2nd();
         }
     }
 }
