@@ -65,7 +65,7 @@ public class MapGenerator : MonoBehaviour
         }
         else if(drawMode == DrawMode.Mesh) 
         {
-            generateMesh.GenerateGrid(cellSize, noiseMap, ampliHeight, heightCurve, genrateLabel);
+            generateMesh.GenerateGrid(cellSize, noiseMap, regions, ampliHeight, heightCurve, genrateLabel);
         }
 
     }
@@ -73,7 +73,7 @@ public class MapGenerator : MonoBehaviour
     public void UpdateMap()
     {
         float[,] noiseMap = GenerateNoiseMap();
-        generateMesh.UpdateGrid(noiseMap,ampliHeight,heightCurve);
+        generateMesh.UpdateGrid(noiseMap, regions, ampliHeight, heightCurve);
     }
 
     public void DestroyMap()
@@ -104,4 +104,5 @@ public struct TerrainType
     public string name;
     public float height;
     public Color colour;
+    public Material material;
 }

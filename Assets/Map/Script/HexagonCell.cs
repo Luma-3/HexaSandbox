@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class HexagonCell : MonoBehaviour
@@ -10,7 +8,9 @@ public class HexagonCell : MonoBehaviour
     public HexaCoordinates coordinates;
     public TextMeshProUGUI label;
 
-
-
-
+    public MeshRenderer RecoverComponent()
+    {
+        MeshRenderer renderer = GetComponent<MeshRenderer>();
+        return renderer;
+    }
 }

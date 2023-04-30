@@ -12,7 +12,7 @@ public class GenerateMesh : MonoBehaviour
     private int height;
     CellData cellData;
 
-    public void GenerateGrid(int size,float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve, bool label)
+    public void GenerateGrid(int size,float[,] noiseMap, TerrainType[] regions, float ampliHeight, AnimationCurve heightCurve, bool label)
     {
         
         width = noiseMap.GetLength(0);
@@ -39,19 +39,24 @@ public class GenerateMesh : MonoBehaviour
                     cellData.CreateLabelCell(i, Instantiate(labelPrefab, gridCanvas.transform));
                 }
 
-                cellData.CreateCell(i++, Instantiate(hexaPrefab, transform));
+                MeshRenderer renderer = cellData.CreateCell(i++, Instantiate(hexaPrefab, transform));
+
+                cellData.TextureCell(regions, x, y, noiseMap, renderer);
+
             }
         }
     }
 
-    public void UpdateGrid(float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve)
+
+    public void UpdateGrid(float[,] noiseMap,TerrainType[] regions, float ampliHeight, AnimationCurve heightCurve)
     {
         for (int y = 0, i = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
                 cellData.SetPositionCell(i, x, y, noiseMap, ampliHeight, heightCurve);
-                cellData.CreateCell(i++);
+                cellData.CreateCell(i);
+                cellData.TextureCell(regions, x, y, noiseMap, cellData._cells[i++].RecoverComponent());
             }
         }
     }
@@ -123,7 +128,7 @@ public class CellData
         _labels[countCell] = label;
     }
 
-    public void CreateCell(int countCell, [Optional] HexagonCell cell)
+    public MeshRenderer CreateCell(int countCell, [Optional] HexagonCell cell)
     {
         if (_cells[countCell] == null)
         {
@@ -139,6 +144,21 @@ public class CellData
             _cells[countCell].label = _labels[countCell];
             _labels[countCell].rectTransform.localPosition = new Vector3(_postions[countCell].x, _postions[countCell].z, -_scales[countCell].z);
             _labels[countCell].text = _cells[countCell].coordinates.ToStringOnSeparateLines();   
+        }
+
+        return _cells[countCell].RecoverComponent();
+    }
+
+    public void TextureCell(TerrainType[] regions, int x, int y, float[,] noiseMap, MeshRenderer renderer)
+    {
+        float currentHeigth = noiseMap[x,y];
+        for (int i = 0; i < regions.Length; i++)
+        {
+            if (currentHeigth <= regions[i].height)
+            {
+                renderer.sharedMaterial = regions[i].material;
+                break;
+            }
         }
     }
 }
