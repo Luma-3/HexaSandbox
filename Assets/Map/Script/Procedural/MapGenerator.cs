@@ -5,6 +5,7 @@ public class MapGenerator : MonoBehaviour
 {
 
     [Header("General")]
+    public int cellSize;
     public int mapWidth;
     public int mapHeight;
 
@@ -19,7 +20,6 @@ public class MapGenerator : MonoBehaviour
     public Vector2 offset;
 
     [Header("Chunk")]
-    public bool linkMesh;
     public bool genrateLabel;
 
     public TerrainType[] regions;
@@ -65,9 +65,20 @@ public class MapGenerator : MonoBehaviour
         }
         else if(drawMode == DrawMode.Mesh) 
         {
-            display.DrawMesh(generateMesh.GenerateGrid(noiseMap, ampliHeight, linkMesh, genrateLabel, heightCurve), TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight));
+            generateMesh.GenerateGrid(cellSize, noiseMap, ampliHeight, heightCurve, genrateLabel);
         }
 
+    }
+
+    public void UpdateMap()
+    {
+        float[,] noiseMap = GenerateNoiseMap();
+        generateMesh.UpdateGrid(noiseMap,ampliHeight,heightCurve);
+    }
+
+    public void DestroyMap()
+    {
+        generateMesh.DestroyGrid();
     }
 
 

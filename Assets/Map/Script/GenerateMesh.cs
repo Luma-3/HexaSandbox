@@ -1,164 +1,144 @@
+using System.Runtime.InteropServices;
 using TMPro;
 using UnityEngine;
 
 public class GenerateMesh : MonoBehaviour
 {
-    private readonly float hexSize = 1f;
 
-    public HexagonCell hexPrefab;
-    public TextMeshProUGUI labelHexPrefab;
+    public HexagonCell hexaPrefab;
+    public TextMeshProUGUI labelPrefab;
 
-    int width;
-    int height;
+    private int width;
+    private int height;
+    CellData cellData;
 
-    Canvas gridCanvas;
-
-    HexagonCell[] cells;
-    Vector2[] uvs;
-
-    public Mesh GenerateGrid(float[,] noiseMap, float ampliHeight, bool linkMesh, bool label, AnimationCurve heightCurve)
+    public void GenerateGrid(int size,float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve, bool label)
     {
+        
         width = noiseMap.GetLength(0);
         height = noiseMap.GetLength(1);
 
-        gridCanvas = GetComponentInChildren<Canvas>();
+        cellData = new(size, width, height);
 
-        cells = new HexagonCell[height * width];
+
+        Canvas gridCanvas = GetComponentInChildren<Canvas>();
         
-        
-
-        Mesh mesh = null;
-
         // Loop over each row and column to create a hexagon at the appropriate position
         for (int y = 0, i = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                // Create a new hexagon
-                
-                HexagonCell cell = CreateCell(x, y, i++);
-                //Set Position and height of the hexagon
-                Vector3 cellPos = SetPositionCell(cell, x, y, noiseMap, ampliHeight, heightCurve);
-                cell.GenerateSurface();
+                //Stock Coordinates of the futur cell
+                cellData.CoordCell(i, x, y);
+
+                //Stock Position and height of the futur cell
+                cellData.SetPositionCell(i, x, y, noiseMap, ampliHeight, heightCurve);
+
                 if (label)
                 {
-                    CreateLabelCell(cell, cellPos);
+                    cellData.CreateLabelCell(i, Instantiate(labelPrefab, gridCanvas.transform));
                 }
+
+                cellData.CreateCell(i++, Instantiate(hexaPrefab, transform));
             }
         }
-
-        for (int i = 0; i < cells.Length; i++)
-        {
-            cells[i].UpdateQuad();
-        }
-
-        if (linkMesh)
-        {
-            mesh = LinkMesh();
-        }
-
-
-
-        return mesh;
     }
 
-    public Mesh LinkMesh()
+    public void UpdateGrid(float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve)
     {
-        MeshFilter[] meshFilter = GetComponentsInChildren<MeshFilter>();
-        CombineInstance[] combine = new CombineInstance[meshFilter.Length];
-
-        for (int i = 0; i < meshFilter.Length; i++)
-        {
-            combine[i].mesh = meshFilter[i].sharedMesh;
-            combine[i].transform = meshFilter[i].transform.localToWorldMatrix;
-            
-            DestroyImmediate(meshFilter[i].gameObject);
-        }
-
-        Mesh mesh = new();
-        mesh.CombineMeshes(combine);
-        uvs = new Vector2[height * width * 18];
-
-        for (int y = 0, j = 0; y < height; y++)
+        for (int y = 0, i = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                for (int i = 0; i < 18; i++)
-                {
-                    uvs[j] = new Vector2(x/(float)width, y/(float)height);
-                    j++;
-                }
+                cellData.SetPositionCell(i, x, y, noiseMap, ampliHeight, heightCurve);
+                cellData.CreateCell(i++);
             }
         }
-        
-        mesh.uv = uvs;
-        mesh.RecalculateNormals();
-
-        return mesh;
     }
 
-
-    private HexagonCell CreateCell(int x, int y, int countCell)
+    public void DestroyGrid()
     {
-        HexagonCell cell = cells[countCell] = Instantiate(hexPrefab);
-        cell.transform.SetParent(transform, false);
-
-        cell.transform.localScale = new Vector3(hexSize, hexSize, hexSize);
-        cell.GenerateMesh();
-
-        cell.coordinates = HexaCoordinates.FromOffsetCoordinates(x, y);
-
-        if (x > 0)
+        for (int i = 0; i < cellData._cells.Length; i++)
         {
-            cell.SetNieghbor(HexaDirection.W, cells[countCell - 1]);
-        }
-        if (y > 0)
-        {
-            if ((y & 1) == 0)
+            DestroyImmediate(cellData._cells[i].gameObject);
+            if (cellData._labels[i] != null)
             {
-                cell.SetNieghbor(HexaDirection.SE, cells[countCell - width]);
-                if (x > 0)
-                {
-                    cell.SetNieghbor(HexaDirection.SW, cells[countCell - width - 1]);
-                }
-            }
-            else
-            {
-                cell.SetNieghbor(HexaDirection.SW, cells[countCell - width]);
-                if (x < width - 1)
-                {
-                    cell.SetNieghbor(HexaDirection.SE, cells[countCell - width + 1]);
-                }
+                DestroyImmediate(cellData._labels[i].gameObject);
             }
         }
+    }
+}
 
-        return cell;
+public class CellData
+{
+    [SerializeField] Canvas gridCanvas;
 
+    private readonly int _size;
+    public readonly HexagonCell[] _cells;
+    private readonly HexaCoordinates[] _coords;
+    private readonly Vector3[] _postions;
+    private readonly Vector3[] _scales;
+    public readonly TextMeshProUGUI[] _labels;
+
+
+    public CellData(int size, int mapWidth, int mapHeight)
+    {
+        int gridSize = mapWidth * mapHeight;
+        _size = size;
+        _cells = new HexagonCell[gridSize];
+        _coords = new HexaCoordinates[gridSize];
+        _postions = new Vector3[gridSize];
+        _scales = new Vector3[gridSize];
+        _labels = new TextMeshProUGUI[gridSize];
     }
 
-    private void CreateLabelCell(HexagonCell cell, Vector3 cellPos)
+    public void CoordCell(int countCell, int x, int y)
     {
-
-        TextMeshProUGUI label = Instantiate(labelHexPrefab);
-        cell.label = label;
-        label.rectTransform.SetParent(gridCanvas.transform, false);
-
-        label.text = cell.coordinates.ToStringOnSeparateLines();
-
-        label.rectTransform.localPosition =
-            new Vector3(cellPos.x, cellPos.z, -cellPos.y);
+        _coords[countCell] = HexaCoordinates.FromOffsetCoordinates(x, y);
     }
 
-    private Vector3 SetPositionCell(HexagonCell cell, int x, int y, float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve)
+    public void SetPositionCell(int countCell, int x, int y, float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve)
     {
-        float hexHeight = heightCurve.Evaluate(noiseMap[x, y]);
+        //Map Posistion based on Coordinate
         Vector3 position;
-        position.x = (x + y * 0.5f - y / 2) * hexSize * (0.866025404f * 2);
-        position.y = hexHeight * ampliHeight;
-        position.z = y * hexSize * 1.5f;
+        position.x = (x + y * 0.5f - y / 2) * _size * (0.866025404f * 2);
+        position.y = 0f;
+        position.z = y * _size * 1.5f;
+        _postions[countCell] = position;
 
-        cell.transform.localPosition = position;
-        return position;
+
+        //Add Curve to Height Map
+        float hexHeight = heightCurve.Evaluate(noiseMap[x, y]);
+
+        //Set Height from Scale
+        Vector3 scale;
+        scale.x = _size;
+        scale.y = _size;
+        scale.z = hexHeight * ampliHeight + 0.1f;
+        _scales[countCell] = scale;
     }
 
+    public void CreateLabelCell(int countCell, TextMeshProUGUI label)
+    {
+        _labels[countCell] = label;
+    }
+
+    public void CreateCell(int countCell, [Optional] HexagonCell cell)
+    {
+        if (_cells[countCell] == null)
+        {
+            _cells[countCell] = cell;
+            cell.coordinates = _coords[countCell];
+        }
+
+        _cells[countCell].transform.localPosition = _postions[countCell];
+        _cells[countCell].transform.localScale = _scales[countCell];
+
+        if (_labels[countCell] != null)
+        {
+            _cells[countCell].label = _labels[countCell];
+            _labels[countCell].rectTransform.localPosition = new Vector3(_postions[countCell].x, _postions[countCell].z, -_scales[countCell].z);
+            _labels[countCell].text = _cells[countCell].coordinates.ToStringOnSeparateLines();   
+        }
+    }
 }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MapDisplay : MonoBehaviour
+public class MapDisplay : MonoBehaviour             
 {
     public Renderer textureRenderer;
     public MeshFilter meshFilter;
@@ -12,9 +12,8 @@ public class MapDisplay : MonoBehaviour
         textureRenderer.transform.localScale = new Vector3(texture.width, 1, texture.height);
     }
 
-    public void DrawMesh(Mesh mesh, Texture2D texture)
+    public void DrawMesh(Texture2D texture)
     {
-        meshFilter.sharedMesh = mesh;
         meshRenderer.sharedMaterial.mainTexture = texture;
     }
 }
