@@ -1,15 +1,15 @@
-
-public enum HexaDirection
+namespace Script.Map
 {
-    NE, E, SE, SW, W, NW
-}
-
-public static class HexadirectionExtensions
-{
-    public static HexaDirection Opposite(this HexaDirection direction)
+    public enum HexaDirection
     {
-        return (int)direction < 3 ? (direction + 3) : (direction - 3);
+        NE, E, SE, SW, W, NW
+    }
+
+    public static class HexadirectionExtensions
+    {
+        public static HexaDirection Opposite(this HexaDirection direction)
+        {
+            return (int)direction < 3 ? (direction + 3) : (direction - 3);
+        }
     }
 }
-
-

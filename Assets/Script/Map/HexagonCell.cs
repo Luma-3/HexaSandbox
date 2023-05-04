@@ -1,25 +1,31 @@
 using TMPro;
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class HexagonCell : MonoBehaviour
+namespace Script.Map
 {
-
-    public HexaCoordinates coordinates;
-    public TextMeshProUGUI label;
-
-    private MeshRenderer _meshRenderer;
-    private MeshFilter _meshFilter;
-
-    private void Awake()
+    [RequireComponent(typeof(MeshFilter))]
+    public class HexagonCell : MonoBehaviour
     {
-        _meshFilter = GetComponent<MeshFilter>();
-    }
-    public MeshRenderer RecoverComponent()
-    {
-        _meshRenderer = GetComponent<MeshRenderer>();
-        return _meshRenderer;
-    }
+
+        public HexaCoordinates coordinates;
+        public TextMeshProUGUI label;
+
+        private MeshRenderer _meshRenderer;
+        private MeshFilter _meshFilter;
+
+        public void GetComponent()
+        {
+            _meshFilter = GetComponent<MeshFilter>();
+            _meshRenderer = GetComponent<MeshRenderer>();
+        }
+        public MeshRenderer RecoverMeshRenderer()
+        {
+            return _meshRenderer;
+        }
     
-    
+        public MeshFilter RecoverMeshFilter()
+        {
+            return _meshFilter;
+        }
+    }
 }

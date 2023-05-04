@@ -1,51 +1,54 @@
 using UnityEngine;
 
-[System.Serializable]
-public struct HexaCoordinates
+namespace Script.Map
 {
-    [SerializeField]
-    private int x, z;
-
-
-    public int X
+    [System.Serializable]
+    public struct HexaCoordinates
     {
-        get { return x;}
-    }
+        [SerializeField]
+        private int x, z;
 
-    public int Z
-    {
-        get { return z;}
-    }
 
-    public int Y
-    {
-        get
+        public int X
         {
-            return -X - Z;
+            get { return x;}
         }
-    }
 
-    public HexaCoordinates(int x, int z)
-    {
-        this.x = x;
-        this.z = z;
-    }
+        public int Z
+        {
+            get { return z;}
+        }
 
-    public static HexaCoordinates FromOffsetCoordinates(int x, int z)
-    {
-        return new HexaCoordinates(x - z / 2, z);
-    }
+        public int Y
+        {
+            get
+            {
+                return -X - Z;
+            }
+        }
 
-    public override string ToString()
-    {
-        return "(" + X.ToString() + ", " + Y.ToString() + ", " + Z.ToString() + ")";
-    }
+        public HexaCoordinates(int x, int z)
+        {
+            this.x = x;
+            this.z = z;
+        }
 
-    public string ToStringOnSeparateLines()
-    {
-        return X.ToString()+ "\n" + Y.ToString() + "\n" + Z.ToString();
-    }
+        public static HexaCoordinates FromOffsetCoordinates(int x, int z)
+        {
+            return new HexaCoordinates(x - z / 2, z);
+        }
 
+        public override string ToString()
+        {
+            return "(" + X.ToString() + ", " + Y.ToString() + ", " + Z.ToString() + ")";
+        }
+
+        public string ToStringOnSeparateLines()
+        {
+            return X.ToString()+ "\n" + Y.ToString() + "\n" + Z.ToString();
+        }
+
+    }
 }
 
 
