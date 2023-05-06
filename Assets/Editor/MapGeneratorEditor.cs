@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using Map.Management;
 using UnityEngine;
 using UnityEditor;
 
@@ -10,13 +9,14 @@ public class MapGeneratorEditor : Editor
     {
         MapGenerator mapGen = (MapGenerator)target;
 
-        DrawDefaultInspector();
-
+        if (DrawDefaultInspector() && mapGen.autoUpdate)
+        {
+            mapGen.DrawMapInEditor();
+        }
 
         if (GUILayout.Button("Generate"))
         {
-
-            mapGen.GenerateMap();
+            mapGen.DrawMapInEditor();
         }
     }
 }
