@@ -1,4 +1,5 @@
 using Input;
+using Script.Map;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -16,17 +17,19 @@ namespace Player.Motor
         [SerializeField] private GameObject body;
         private float _cineMachineYaw;
         private float _cineMachinePitch;
-        private float _targetRotation;
         
         [Header("HorizontalMovement")]
-        [SerializeField] private float normalMaxVelocity;
         [SerializeField] private float moveMultiplier;
+        [SerializeField] private float normalMaxVelocity;
         [SerializeField] private float sprintMaxVelocity;
+        [SerializeField] [Range(0.0001f, 2f)] private float noGroundedVelocityMultiplier;
         [SerializeField] private float frictionForce;
+        private float _targetRotation;
+        private float _rotationVelocity;
         
         [Header("GroundCheck")]
         [SerializeField] private float radius;
-        [SerializeField] private new CapsuleCollider collider;
+        [SerializeField] private CapsuleCollider bodyCollider;
         [SerializeField] private LayerMask groundMask;
         private bool _isGrounded;
         
@@ -42,9 +45,12 @@ namespace Player.Motor
         private float _jumpBuffer; 
         private bool _isJumping;
         
+        [Header("Pass Through")]
+        [SerializeField] private float maxHeightPassThrough;
+        
         private Rigidbody _rigidbody;
 
-        
+
         private void Awake()
         {
             _rigidbody = GetComponent<Rigidbody>();
@@ -57,15 +63,7 @@ namespace Player.Motor
             CalculateMovement();
             Jump();
             PassThrough();
-        }
-
-        private void PassThrough()
-        {
-            var position = transform.position;
-            var origin = new Vector3(position.x, collider.bounds.min.y, position.z);
-            var ray = new Ray(origin, Vector3.forward);
-            Physics.Raycast(ray, 1f, groundMask);
-            Debug.DrawRay(origin,Vector3.forward,Color.red,0.5f);
+            
         }
 
         private void LateUpdate()
@@ -73,11 +71,21 @@ namespace Player.Motor
             Camera();
             BodyRotation();
         }
-
+        
+        
+        
+        private static float CampAngle(float value, float min,  float max)
+        {
+            if (value < -360) value += 360;
+            if (value > 360) value -= 360;
+            return Mathf.Clamp(value, min, max);
+        }
+        
         private void BodyRotation()
         {
-            var headRotation = head.transform.rotation;
-            body.transform.rotation = new Quaternion(0.0f, headRotation.y, 0.0f, 0.0f);
+            var headRotationY = head.transform.eulerAngles.y;
+
+            body.transform.rotation = Quaternion.Euler(0.0f, headRotationY, 0.0f);
         }
 
         private void Camera()
@@ -95,67 +103,93 @@ namespace Player.Motor
             head.transform.rotation = Quaternion.Euler(_cineMachinePitch,
                                                         _cineMachineYaw, 0.0f);
         }
-
-        private static float CampAngle(float value, float min,  float max)
-        {
-            if (value < -360) value += 360;
-            if (value > 360) value -= 360;
-            return Mathf.Clamp(value, min, max);
-        }
+        
+        
 
         private void CalculateMovement()
         {
 
-            var movementV2 = new Vector2(MoveVector.x,MoveVector.z).normalized;
+            var movementV2 = new Vector2(MoveVector.x,MoveVector.y).normalized;
 
             var targetMultiplier = moveMultiplier;
             
             var maxVelocity = SprintBool ? sprintMaxVelocity : normalMaxVelocity;
+            maxVelocity = _isGrounded ? maxVelocity : maxVelocity * noGroundedVelocityMultiplier;
 
-            if (movementV2 != Vector2.zero)
-            { 
+            if (MoveVector != Vector2.zero)
+            {
                 _targetRotation = Mathf.Atan2(movementV2.x, movementV2.y) * Mathf.Rad2Deg +
-                                head.transform.eulerAngles.y;
+                                  head.transform.eulerAngles.y;
+                
             }
             else //stop player if no move input is pressed
             {
-                Friction();
                 targetMultiplier = 0.0f;
             }
 
             var speed = targetMultiplier;
             
+            Friction();
             ApplyMovement(speed);
             ClampHorizontalVelocity(maxVelocity);
+            
+        }
+        
+        
+        
+        private void ApplyMovement(float speed)
+        {
+            var targetDirection = Quaternion.Euler(0f, _targetRotation, 0f) * Vector3.forward;
+            
+            _rigidbody.AddForce(targetDirection.normalized * (speed * 10f), ForceMode.Force);
         }
 
         private void Friction()
         {
-            var velocity = _rigidbody.velocity;
+            var rbVelocity = _rigidbody.velocity;
+            
+            var velocity = new Vector2(rbVelocity.x,rbVelocity.z);
             var friction = velocity * (Time.deltaTime * frictionForce);
+            
             velocity -= friction;
-            _rigidbody.velocity = velocity;
+            _rigidbody.velocity = new Vector3(velocity.x,rbVelocity.y,velocity.y);
         }
 
         private void ClampHorizontalVelocity(float maxVelocity)
         {
             var rbVelocity = _rigidbody.velocity;
-            rbVelocity.x = Mathf.Clamp(rbVelocity.x, -maxVelocity, maxVelocity);
-            rbVelocity.z = Mathf.Clamp(rbVelocity.z, -maxVelocity, maxVelocity);
-            _rigidbody.velocity = rbVelocity;
+            var newVelocity = new Vector2(rbVelocity.x,rbVelocity.z);
+            newVelocity = Vector2.ClampMagnitude(newVelocity, maxVelocity);
+            _rigidbody.velocity = new Vector3(newVelocity.x,rbVelocity.y,newVelocity.y);
+        }
+        
+        
+        private void PassThrough()
+        {
+            var transformPos = transform.position;
+
+            var origin = new Vector3(transformPos.x, bodyCollider.bounds.min.y, transformPos.z);
+            var direction = Quaternion.Euler(0.0f, head.transform.localEulerAngles.y, 0.0f) * Vector3.forward;
+            
+            if (Physics.Raycast(origin, direction, out var hit, 1.5f, groundMask))
+            {
+                var heightDif = hit.transform.GetComponent<MeshCollider>().bounds.max.y - bodyCollider.bounds.min.y;
+
+                if (heightDif <= maxHeightPassThrough && MoveVector.y != 0f)
+                {
+
+                    transformPos.y += heightDif;
+                    transform.position = transformPos;
+                }
+            }
+
         }
 
-        private void ApplyMovement(float speed)
-        {
-            var targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-            
-            _rigidbody.AddForce(targetDirection.normalized * speed + new Vector3(0f,MoveVector.normalized.y,0f));
-        }
         
         private void GroundCheck()
         {
             var position = transform.position;
-            var spherePosition = new Vector3(position.x, collider.bounds.min.y, position.z);
+            var spherePosition = new Vector3(position.x, bodyCollider.bounds.min.y, position.z);
             _isGrounded = Physics.CheckSphere(spherePosition, radius, groundMask);
         }
 

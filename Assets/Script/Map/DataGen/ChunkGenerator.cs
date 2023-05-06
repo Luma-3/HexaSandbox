@@ -1,6 +1,7 @@
+using Script.Map;
 using UnityEngine;
 
-namespace Script.Map.DataGen
+namespace Map.DataGen
 {
     public static class ChunkGenerator
     {
@@ -81,7 +82,7 @@ namespace Script.Map.DataGen
         {
             if (Cells[countCell]) return Cells[countCell];
             Cells[countCell] = Object.Instantiate(_prefab, parent);
-            Cells[countCell].coordinates = _coords[countCell];
+            //Cells[countCell].coordinates = _coords[countCell];
 
             return Cells[countCell];
         }

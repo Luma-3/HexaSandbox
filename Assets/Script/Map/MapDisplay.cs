@@ -1,7 +1,7 @@
-using Script.Map.DataGen;
+using Map.DataGen;
 using UnityEngine;
 
-namespace Script.Map
+namespace Map
 {
     public class MapDisplay : MonoBehaviour
     {

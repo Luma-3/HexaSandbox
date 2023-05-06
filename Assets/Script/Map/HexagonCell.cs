@@ -1,22 +1,28 @@
-using TMPro;
 using UnityEngine;
 
-namespace Script.Map
+namespace Map
 {
     [RequireComponent(typeof(MeshFilter))]
     public class HexagonCell : MonoBehaviour
     {
 
-        public HexaCoordinates coordinates;
-        public TextMeshProUGUI label;
+        //public HexaCoordinates coordinates;
+        //public TextMeshProUGUI label;
 
         private MeshRenderer _meshRenderer;
         private MeshFilter _meshFilter;
+        private MeshCollider _meshCollider;
+
+        private void Awake()
+        {
+            GetComponent();
+        }
 
         public void GetComponent()
         {
             _meshFilter = GetComponent<MeshFilter>();
             _meshRenderer = GetComponent<MeshRenderer>();
+            _meshCollider = GetComponent<MeshCollider>();
         }
         public MeshRenderer RecoverMeshRenderer()
         {
@@ -27,5 +33,6 @@ namespace Script.Map
         {
             return _meshFilter;
         }
+
     }
 }

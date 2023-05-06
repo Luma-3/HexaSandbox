@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
-using Script.Map.DataGen;
+using Map.DataGen;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Script.Map.Management
+namespace Map.Management
 {
     public class EndlessTerrain : MonoBehaviour
     {
@@ -20,7 +20,8 @@ namespace Script.Map.Management
         private readonly List<TerrainChunk> _terrainChunkVisibleLastUpdate = new();
     
         //private static readonly Vector2 RealSize = new(110.8512517f, 96);
-        private static readonly Vector2 RealSize = new(55.42562586f, 48);
+        //private static readonly Vector2 RealSize = new(55.42562586f, 48);
+        private static readonly Vector2 RealSize = new(27.71281292f, 24);
 
 
         private void Start()
@@ -115,7 +116,7 @@ namespace Script.Map.Management
                     cell.GetComponent();
                     cellsData.SetPosition(i);
 
-                    cell.RecoverMeshRenderer().sharedMaterial = _mapData.materialMap[i];
+                    cell.RecoverMeshRenderer().sharedMaterial = _mapData.MaterialMap[i];
                     var meshFilter = cell.RecoverMeshFilter();
                     cell.AddComponent<MeshCollider>().sharedMesh = meshFilter.mesh;
                 }

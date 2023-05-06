@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Script.Map.DataGen;
+using Map.DataGen;
 using UnityEngine;
 
-namespace Script.Map.Management
+namespace Map.Management
 {
     public class MapGenerator : MonoBehaviour
     {
@@ -24,34 +24,45 @@ namespace Script.Map.Management
         public AnimationCurve heightCurve;
         public int seed;
         public Vector2 offset;
-    
+
+        [Header("Biome")] 
+        public int chunkBiomeSize;
+        public int biomeSize;
+        
 
         public TerrainType[] regions;
+        public BiomeType[] biomes;
 
-        public enum DrawMode { NoiseMap, ColourMap, Mesh }
+        public enum DrawMode { NoiseMap, ColourMap, Mesh, BiomeMap }
         public DrawMode drawMode;
 
         public bool autoUpdate;
 
-        Queue<MapThreadInfo<MapData>> mapDataThreadInfosQueue = new();
-        Queue<MapThreadInfo<CellsData>> cellsDataThreadInfosQueue = new();
+        private readonly Queue<MapThreadInfo<MapData>> _mapDataThreadInfosQueue = new();
+        private readonly Queue<MapThreadInfo<CellsData>> _cellsDataThreadInfosQueue = new();
 
         public void DrawMapInEditor()
         {
-            MapData mapData = GenerateMapData(Vector2.zero);
+            var mapData = GenerateMapData(Vector2.zero);
 
-            MapDisplay display = FindAnyObjectByType<MapDisplay>();
-            if (drawMode == DrawMode.NoiseMap)
+            var display = FindAnyObjectByType<MapDisplay>();
+            
+            switch (drawMode)
             {
-                display.DrawTexture(TextureGenerator.TextureFromHeightMap(mapData.noiseMap));
-            }
-            else if (drawMode == DrawMode.ColourMap)
-            {
-                display.DrawTexture(TextureGenerator.TextureFromColourMap(mapData.colourMap, chunkSize, chunkSize));
-            }
-            else if (drawMode == DrawMode.Mesh)
-            {
-                display.DrawChunk(ChunkGenerator.GenerateChunk(cellSize, mapData.noiseMap, ampliHeight, heightCurve, cellPrefab), mapData.materialMap);
+                case DrawMode.NoiseMap:
+                    display.DrawTexture(TextureGenerator.TextureFromHeightMap(mapData.NoiseMap));
+                    break;
+                case DrawMode.ColourMap:
+                    display.DrawTexture(TextureGenerator.TextureFromColour(mapData.ColourMap, chunkSize, chunkSize));
+                    break;
+                case DrawMode.Mesh:
+                    display.DrawChunk(
+                        ChunkGenerator.GenerateChunk(cellSize, mapData.NoiseMap, ampliHeight, heightCurve, cellPrefab),
+                        mapData.MaterialMap);
+                    break;
+                case DrawMode.BiomeMap:
+                    display.DrawTexture(TextureGenerator.TextureFromColour(mapData.BiomeMap,chunkBiomeSize,chunkBiomeSize));
+                    break;
             }
         }
 
@@ -65,12 +76,12 @@ namespace Script.Map.Management
             new Thread(threadStart).Start();
         }
 
-        public void MapDataThread(Vector2 center, Action<MapData> callback)
+        private void MapDataThread(Vector2 center, Action<MapData> callback)
         {
-            MapData mapData = GenerateMapData(center);
-            lock (mapDataThreadInfosQueue)
+            var mapData = GenerateMapData(center);
+            lock (_mapDataThreadInfosQueue)
             {
-                mapDataThreadInfosQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
+                _mapDataThreadInfosQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
             }
 
         }
@@ -85,32 +96,32 @@ namespace Script.Map.Management
             new Thread(threadStart).Start();
         }
 
-        public void CellsDataThread(MapData mapData, Action<CellsData> callback)
+        private void CellsDataThread(MapData mapData, Action<CellsData> callback)
         {
-            var cellsData = ChunkGenerator.GenerateChunk(cellSize, mapData.noiseMap, ampliHeight, heightCurve, cellPrefab);
-            lock (cellsDataThreadInfosQueue)
+            var cellsData = ChunkGenerator.GenerateChunk(cellSize, mapData.NoiseMap, ampliHeight, heightCurve, cellPrefab);
+            lock (_cellsDataThreadInfosQueue)
             {
-                cellsDataThreadInfosQueue.Enqueue(new MapThreadInfo<CellsData>(callback,cellsData));
+                _cellsDataThreadInfosQueue.Enqueue(new MapThreadInfo<CellsData>(callback,cellsData));
             }
         }
 
         private void Update()
         {
-            if(mapDataThreadInfosQueue.Count > 0)
+            if(_mapDataThreadInfosQueue.Count > 0)
             {
-                for (var i = 0; i < mapDataThreadInfosQueue.Count; i++)
+                for (var i = 0; i < _mapDataThreadInfosQueue.Count; i++)
                 {
-                    var threadInfo = mapDataThreadInfosQueue.Dequeue();
-                    threadInfo.callback(threadInfo.parameter);
+                    var threadInfo = _mapDataThreadInfosQueue.Dequeue();
+                    threadInfo.Callback(threadInfo.Parameter);
                 }
             }
 
-            if (cellsDataThreadInfosQueue.Count > 0);
+            if (_cellsDataThreadInfosQueue.Count > 0)
             {
-                for (var i = 0; i < cellsDataThreadInfosQueue.Count; i++)
+                for (var i = 0; i < _cellsDataThreadInfosQueue.Count; i++)
                 {
-                    var threadInfo = cellsDataThreadInfosQueue.Dequeue();
-                    threadInfo.callback(threadInfo.parameter);
+                    var threadInfo = _cellsDataThreadInfosQueue.Dequeue();
+                    threadInfo.Callback(threadInfo.Parameter);
                 }
             }
         }
@@ -119,21 +130,24 @@ namespace Script.Map.Management
         private MapData GenerateMapData(Vector2 center)
         { 
             var noiseMap = Noise.GenerateNoiseMap(chunkSize, chunkSize, seed, noiseScale, octaves, persistence, lacunarity, center + offset, normalizeMode);
-
+            var biomeMap = VoronoiDiagram.GenerateDiagram(chunkBiomeSize, biomeSize, seed, biomes);
+            
             var colourMap = new Color[chunkSize * chunkSize];
             var materials = new Material[chunkSize * chunkSize];
             for (var y = 0; y < chunkSize; y++)
             {
                 for (var x = 0; x < chunkSize; x++)
                 {
+
                     var currentHeight = noiseMap[x, y];
                     for (var i = 0; i < regions.Length; i++)
                     {
+                        
                         if(currentHeight >= regions[i].height)
                         {
                             colourMap[y * chunkSize + x] = regions[i].colour;
                             materials[y * chunkSize + x] = regions[i].material; 
-                            //Debug.Log(y * chunkSize + x);
+                            
                         }
                         else
                         {
@@ -142,7 +156,7 @@ namespace Script.Map.Management
                     }
                 }
             }
-            return new MapData(noiseMap, colourMap, materials);
+            return new MapData(noiseMap, biomeMap, colourMap, materials);
         }
 
 
@@ -156,18 +170,18 @@ namespace Script.Map.Management
 
         private struct MapThreadInfo<T>
         {
-            public readonly Action<T> callback; 
-            public readonly T parameter;
+            public readonly Action<T> Callback; 
+            public readonly T Parameter;
 
             public MapThreadInfo(Action<T> callback, T parameter)
             {
-                this.callback = callback;
-                this.parameter = parameter;
+                Callback = callback;
+                Parameter = parameter;
             }
         }
     }
 
-    [System.Serializable]
+    [Serializable]
     public struct TerrainType
     {
         public string name;
@@ -175,18 +189,27 @@ namespace Script.Map.Management
         public Color colour;
         public Material material;
     }
+    
+    [Serializable]
+    public struct BiomeType
+    {
+        public string name;
+        public Color colour;
+    }
 
     public struct MapData
     {
-        public readonly float[,] noiseMap;
-        public readonly Color[] colourMap;
-        public readonly Material[] materialMap;
+        public readonly float[,] NoiseMap;
+        public readonly Color[] BiomeMap;
+        public readonly Color[] ColourMap;
+        public readonly Material[] MaterialMap;
 
-        public MapData(float[,] noiseMap, Color[] colourMap, Material[] materialMap)
+        public MapData(float[,] noiseMap, Color[] biomeMap, Color[] colourMap, Material[] materialMap)
         {
-            this.noiseMap = noiseMap;
-            this.colourMap = colourMap;
-            this.materialMap = materialMap;
+            NoiseMap = noiseMap;
+            ColourMap = colourMap;
+            MaterialMap = materialMap;
+            BiomeMap = biomeMap;
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Script.Map.DataGen
+namespace Map.DataGen
 {
     public static class Noise
     {
@@ -8,19 +8,18 @@ namespace Script.Map.DataGen
 
         public static float[,] GenerateNoiseMap(int mapWidth, int mapHeight, int seed, float scale, int octaves, float persistance, float lacunarity, Vector2 offset, NormalizeMode normalizeMode)
         {
-            float[,] noiseMap = new float[mapWidth, mapHeight];
+            var noiseMap = new float[mapWidth, mapHeight];
 
-            System.Random prng = new System.Random(seed);
-            Vector2[] octaveOffsets = new Vector2[octaves];
+            var prng = new System.Random(seed);
+            var octaveOffsets = new Vector2[octaves];
 
-            float maxPossibleHeight = 0;
-            float amplitude = 1;
-            float frequency = 1;
+            var maxPossibleHeight = 0f;
+            var amplitude = 1f;
 
-            for (int i = 0; i < octaves; i++)
+            for (var i = 0; i < octaves; i++)
             {
-                float offsetX = prng.Next(-100000, 100000) + offset.x;
-                float offsetY = prng.Next(-100000, 100000) - offset.y;
+                var offsetX = prng.Next(-100000, 100000) + offset.x;
+                var offsetY = prng.Next(-100000, 100000) - offset.y;
                 octaveOffsets[i] = new Vector2(offsetX, offsetY);
 
                 maxPossibleHeight += amplitude;
@@ -32,27 +31,27 @@ namespace Script.Map.DataGen
                 scale = 0.0001f;
             }
 
-            float maxLocalNoiseHeight = float.MinValue;
-            float minLocalNoiseHeight = float.MaxValue;
+            var maxLocalNoiseHeight = float.MinValue;
+            var minLocalNoiseHeight = float.MaxValue;
 
-            float halfWidth = mapWidth / 2f;
-            float halfHeight = mapHeight / 2f;
+            var halfWidth = mapWidth / 2f;
+            var halfHeight = mapHeight / 2f;
 
-            for (int y = 0; y < mapHeight; y++)
+            for (var y = 0; y < mapHeight; y++)
             {
-                for (int x = 0; x < mapWidth; x++)
+                for (var x = 0; x < mapWidth; x++)
                 {
 
                     amplitude = 1;
-                    frequency = 1;
-                    float noiseHeight = 0;
+                    float frequency = 1;
+                    var noiseHeight = 0f;
 
-                    for (int i = 0; i < octaves; i++)
+                    for (var i = 0; i < octaves; i++)
                     {
-                        float sampleX = (x - halfWidth + octaveOffsets[i].x) / scale * frequency;
-                        float sampleY = (y - halfHeight + octaveOffsets[i].y) / scale * frequency;
+                        var sampleX = (x - halfWidth + octaveOffsets[i].x) / scale * frequency;
+                        var sampleY = (y - halfHeight + octaveOffsets[i].y) / scale * frequency;
 
-                        float perlinValue = Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1;
+                        var perlinValue = Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1;
                         noiseHeight += perlinValue * amplitude;
                   
                         amplitude *= persistance;
@@ -71,9 +70,9 @@ namespace Script.Map.DataGen
                 }
             }
 
-            for (int y = 0; y < mapHeight; y++)
+            for (var y = 0; y < mapHeight; y++)
             {
-                for (int x = 0; x < mapWidth; x++)
+                for (var x = 0; x < mapWidth; x++)
                 {
                     if(normalizeMode == NormalizeMode.Local)
                     {
@@ -81,7 +80,7 @@ namespace Script.Map.DataGen
                     }
                     else
                     {
-                        float normalizedHeight = (noiseMap[x, y] + 1) / (maxPossibleHeight);
+                        var normalizedHeight = (noiseMap[x, y] + 1) / maxPossibleHeight;
                         noiseMap[x, y] = Mathf.Clamp(normalizedHeight, 0, int.MaxValue);
                     }
                 }

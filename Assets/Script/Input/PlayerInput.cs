@@ -10,7 +10,7 @@ namespace Input
         private PlayerInputMap.PhysicInputActions _inputs;
 
         protected Vector2 LookVector { get; private set; }
-        protected Vector3 MoveVector { get; private set; }
+        protected Vector2 MoveVector { get; private set; }
         protected bool SprintBool { get; private set; }
         protected bool JumpBool { get; private set; }
 
@@ -45,7 +45,7 @@ namespace Input
 
         public void OnMove(InputAction.CallbackContext ctx)
         {
-            MoveVector = ctx.ReadValue<Vector3>();
+            MoveVector = ctx.ReadValue<Vector2>();
         }
 
         private void OnLook(InputAction.CallbackContext ctx)
