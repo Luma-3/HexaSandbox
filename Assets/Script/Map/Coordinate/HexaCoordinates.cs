@@ -21,9 +21,9 @@ namespace Map.Coordinate
             this.z = z;
         }
 
-        public static HexaCoordinates FromOffsetCoordinates(int x, int z)
+        public static HexaCoordinates FromOffsetCoordinates(int x, int z, int chunkX, int chunkZ)
         {
-            return new HexaCoordinates(x - z / 2, z);
+            return new HexaCoordinates(x - z / 2, chunkX * 8 + z);
         }
 
         public override string ToString()

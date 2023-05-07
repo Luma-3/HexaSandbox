@@ -7,7 +7,7 @@ namespace Map.DataGen
     public static class ChunkGenerator
     {
 
-        public static CellsData GenerateChunk(int size,float[,] noiseMap, float ampliHeight, AnimationCurve curve, HexagonCell hexaPrefab)
+        public static CellsData GenerateChunk(int size,float[,] noiseMap, float ampliHeight, AnimationCurve curve, HexagonCell hexaPrefab, ChunkCoordinates chunkCoord)
         {
             AnimationCurve heightCurve = new(curve.keys);
             var width = noiseMap.GetLength(0);
@@ -21,7 +21,7 @@ namespace Map.DataGen
                 for (var x = 0; x < width; x++)
                 {
                     //Stock Coordinates of the future cell
-                    cellsData.CoordCell(i, x, y);
+                    cellsData.CoordCell(i, x, y, chunkCoord);
 
                     //Stock Position and height of the future cell
                     cellsData.PositionCell(i++, x, y, noiseMap, ampliHeight, heightCurve);
@@ -52,9 +52,9 @@ namespace Map.DataGen
             _prefab = prefab;
         }
 
-        public void CoordCell(int countCell, int x, int y)
+        public void CoordCell(int countCell, int x, int y,ChunkCoordinates chunkCoord)
         {
-            _coords[countCell] = HexaCoordinates.FromOffsetCoordinates(x, y);
+            _coords[countCell] = HexaCoordinates.FromOffsetCoordinates(x, y, chunkCoord.X,chunkCoord.Z);
         }
 
         public void PositionCell(int countCell, int x, int y, float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve)

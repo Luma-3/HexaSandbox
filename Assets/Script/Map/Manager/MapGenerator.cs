@@ -55,11 +55,11 @@ namespace Map.Management
                 case DrawMode.ColourMap:
                     display.DrawTexture(TextureGenerator.TextureFromColour(mapData.ColourMap, chunkSize, chunkSize));
                     break;
-                case DrawMode.Mesh:
+                /*case DrawMode.Mesh:
                     display.DrawChunk(
                         ChunkGenerator.GenerateChunk(cellSize, mapData.NoiseMap, ampliHeight, heightCurve, cellPrefab),
                         mapData.MaterialMap);
-                    break;
+                    break;*/
                 case DrawMode.BiomeMap:
                     display.DrawTexture(TextureGenerator.TextureFromColour(mapData.BiomeMap,chunkBiomeSize,chunkBiomeSize));
                     break;

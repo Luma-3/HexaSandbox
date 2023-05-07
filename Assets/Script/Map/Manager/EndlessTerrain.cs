@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using Map.Coordinate;
 using Map.DataGen;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -10,6 +12,7 @@ namespace Map.Management
     {
         private const float MaxViewDst = 300f;
         public Transform viewer;
+        public Chunk chunk;
 
         private static Vector2 _viewerPosition;
         private static MapGenerator _mapGenerator;
@@ -59,12 +62,12 @@ namespace Map.Management
             }
         }
 
-        private static Vector2 CreateChunkCoord(int xOffset, int yOffset)
+        private static Vector2Int CreateChunkCoord(int xOffset, int yOffset)
         {
             var currentChunkCoordX = Mathf.RoundToInt(_viewerPosition.x / RealSize.x);
             var currentChunkCoordY = Mathf.RoundToInt(_viewerPosition.y / RealSize.y);
 
-            var viewedChunkCoord = new Vector2(currentChunkCoordX - xOffset, currentChunkCoordY - yOffset);
+            var viewedChunkCoord = new Vector2Int(currentChunkCoordX - xOffset, currentChunkCoordY - yOffset);
 
             return viewedChunkCoord;
         }
@@ -78,7 +81,7 @@ namespace Map.Management
                 _terrainChunkVisibleLastUpdate.Remove(chunkVisibleLastUpdate);
             }
         }
-        private void CheckChunk(Vector2 chunkCoord)
+        private void CheckChunk(Vector2Int chunkCoord)
         {
             if (_terrainChunkDic.ContainsKey(chunkCoord))
             {
@@ -96,18 +99,18 @@ namespace Map.Management
             }
         }
 
-        private void EnableDisableChunk(Vector2 chunkCoord)
+        private void EnableDisableChunk(Vector2Int chunkCoord)
         {
             _terrainChunkDic[chunkCoord].SetVisible(_terrainChunkDic[chunkCoord].CheckDst());
         }
 
 
-        private void AddChunkToDictionary(Vector2 chunkCoord)
+        private void AddChunkToDictionary(Vector2Int chunkCoord)
         {
-            _terrainChunkDic.Add(chunkCoord, new TerrainChunk(chunkCoord, RealSize, transform, _chunkSize));
+            _terrainChunkDic.Add(chunkCoord, new TerrainChunk(chunkCoord, RealSize, transform, _chunkSize, chunk));
         }
 
-        private void AddChunkToList(Vector2 chunkCoord)
+        private void AddChunkToList(Vector2Int chunkCoord)
         {
             _terrainChunkVisibleLastUpdate.Add(_terrainChunkDic[chunkCoord]);
         }
@@ -116,26 +119,22 @@ namespace Map.Management
 
         private class TerrainChunk
         {
-            private readonly GameObject _chunkObject;
+            private readonly Chunk _chunkObject;
             private Bounds _bounds;
 
             private MapData _mapData;
 
-            public TerrainChunk(Vector2 coord,Vector2 realSize, Transform parent, int chunkSize)
+            public TerrainChunk(Vector2Int coord,Vector2 realSize, Transform parent, int chunkSize, Chunk chunkPrefab)
             {
                 var position = coord * realSize - realSize / 2;
                 _bounds = new Bounds(new Vector2(coord.x * realSize.x, coord.y * realSize.y), realSize);
                 _mapGenerator.RequestMapData(new Vector2(coord.x * chunkSize,-coord.y * chunkSize ), OnMapDataReceived);
+                
             
                 Vector3 positionV3 = new(position.x, 0.0f, position.y);
-                _chunkObject = new GameObject("Terrain Chunk")
-                {
-                    transform =
-                    {
-                        position = positionV3,
-                        parent = parent
-                    }
-                };
+                _chunkObject = Instantiate(chunkPrefab, positionV3, quaternion.identity, parent);
+                _chunkObject.Coordinates = ChunkCoordinates.Coord(coord.x, coord.y);
+                
                 SetVisible(false);   
             }
 
@@ -167,12 +166,12 @@ namespace Map.Management
 
             public void SetVisible(bool visible)
             {
-                _chunkObject.SetActive(visible);
+                _chunkObject.gameObject.SetActive(visible);
             }
 
             public bool IsVisible()
             {
-                return _chunkObject.activeSelf;
+                return _chunkObject.gameObject.activeSelf;
             }
         }
     }
