@@ -1,3 +1,4 @@
+using Map.Coordinate;
 using UnityEngine;
 
 namespace Map
@@ -6,7 +7,7 @@ namespace Map
     public class HexagonCell : MonoBehaviour
     {
 
-        //public HexaCoordinates coordinates;
+        public HexaCoordinates coordinates;
         //public TextMeshProUGUI label;
 
         private MeshRenderer _meshRenderer;
@@ -18,11 +19,12 @@ namespace Map
             GetComponent();
         }
 
-        public void GetComponent()
+        public MeshFilter GetComponent()
         {
             _meshFilter = GetComponent<MeshFilter>();
             _meshRenderer = GetComponent<MeshRenderer>();
             _meshCollider = GetComponent<MeshCollider>();
+            return _meshFilter;
         }
         public MeshRenderer RecoverMeshRenderer()
         {

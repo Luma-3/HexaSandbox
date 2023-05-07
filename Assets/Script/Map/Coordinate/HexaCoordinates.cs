@@ -13,7 +13,7 @@ namespace Map.Coordinate
 
         public int Z => z;
 
-        public int Y => -X - Z;
+        public int Y => -x - z;
 
         public HexaCoordinates(int x, int z)
         {
@@ -21,19 +21,19 @@ namespace Map.Coordinate
             this.z = z;
         }
 
-        public static HexaCoordinates FromOffsetCoordinates(int x, int z, int chunkX, int chunkZ)
+        public static HexaCoordinates FromOffsetCoordinates(int x, int z)
         {
-            return new HexaCoordinates(x - z / 2, chunkX * 8 + z);
+            return new HexaCoordinates(x - z /2,  z);
+        }
+
+        public static HexaCoordinates FromChunkCoord(int x, int z, int chunkX, int chunkZ)
+        {
+            return new HexaCoordinates(chunkX * 8 + x - 4 * chunkZ , chunkZ * 8 + z);
         }
 
         public override string ToString()
         {
             return "(" + X.ToString() + ", " + Y.ToString() + ", " + Z.ToString() + ")";
-        }
-
-        public string ToStringOnSeparateLines()
-        {
-            return X.ToString()+ "\n" + Y.ToString() + "\n" + Z.ToString();
         }
 
     }

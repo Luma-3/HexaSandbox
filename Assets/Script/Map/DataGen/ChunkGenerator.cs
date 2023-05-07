@@ -1,19 +1,20 @@
 using Map.Coordinate;
 using Script.Map;
 using UnityEngine;
+using Vector2 = System.Numerics.Vector2;
 
 namespace Map.DataGen
 {
     public static class ChunkGenerator
     {
 
-        public static CellsData GenerateChunk(int size,float[,] noiseMap, float ampliHeight, AnimationCurve curve, HexagonCell hexaPrefab, ChunkCoordinates chunkCoord)
+        public static CellsData GenerateChunk(int size,float[,] noiseMap, float ampliHeight, AnimationCurve curve, HexagonCell hexaPrefab)
         {
             AnimationCurve heightCurve = new(curve.keys);
             var width = noiseMap.GetLength(0);
             var height = noiseMap.GetLength(1);
 
-            CellsData cellsData = new(size, width, height, hexaPrefab);
+            CellsData cellsData = new(width, height);
  
             // Loop over each row and column to create a hexagon at the appropriate position
             for (int y = 0, i = 0; y < height; y++)
@@ -21,10 +22,10 @@ namespace Map.DataGen
                 for (var x = 0; x < width; x++)
                 {
                     //Stock Coordinates of the future cell
-                    cellsData.CoordCell(i, x, y, chunkCoord);
+                    cellsData.CoordCell(i, x, y);
 
                     //Stock Position and height of the future cell
-                    cellsData.PositionCell(i++, x, y, noiseMap, ampliHeight, heightCurve);
+                    cellsData.PositionCell(size,i++, x, y, noiseMap, ampliHeight, heightCurve);
                 }
             }
             return cellsData;
@@ -33,39 +34,35 @@ namespace Map.DataGen
 
     public class CellsData
     {
-        private readonly int _size;
-        public readonly HexagonCell[] Cells;
-        private readonly HexaCoordinates[] _coords;
-        private readonly Vector3[] _positions;
-        private readonly Vector3[] _scales;
-        private readonly HexagonCell _prefab;
+        public readonly int cellNumber;
+        public readonly HexaCoordinates[] Coords;
+        public readonly Vector3[] Positions;
+        public readonly Vector3[] Scales;
 
 
-        public CellsData(int size, int mapWidth, int mapHeight, HexagonCell prefab)
+        public CellsData(int mapWidth, int mapHeight)
         {
             var chunkSize = mapWidth * mapHeight;
-            _size = size;
-            Cells = new HexagonCell[chunkSize];
-            _coords = new HexaCoordinates[chunkSize];
-            _positions = new Vector3[chunkSize];
-            _scales = new Vector3[chunkSize];
-            _prefab = prefab;
+            cellNumber = mapWidth * mapHeight;
+            Coords = new HexaCoordinates[chunkSize];
+            Positions = new Vector3[chunkSize];
+            Scales = new Vector3[chunkSize];
         }
 
-        public void CoordCell(int countCell, int x, int y,ChunkCoordinates chunkCoord)
+        public void CoordCell(int countCell, int x, int y)
         {
-            _coords[countCell] = HexaCoordinates.FromOffsetCoordinates(x, y, chunkCoord.X,chunkCoord.Z);
+            Coords[countCell] = HexaCoordinates.FromOffsetCoordinates(x, y);
         }
 
-        public void PositionCell(int countCell, int x, int y, float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve)
+        public void PositionCell(int cellSize, int countCell, int x, int y, float[,] noiseMap, float ampliHeight, AnimationCurve heightCurve)
         {
             //Map Position based on Coordinate
             Vector3 position;
             // ReSharper disable once PossibleLossOfFraction
-            position.x = (x + y * 0.5f - y / 2) * _size * (0.866025404f * 2);
+            position.x = (x + y * 0.5f - y / 2) * cellSize * (0.866025404f * 2);
             position.y = 0f;
-            position.z = y * _size * 1.5f;
-            _positions[countCell] = position;
+            position.z = y * cellSize * 1.5f;
+            Positions[countCell] = position;
 
 
             //Add Curve to Height Map
@@ -73,25 +70,10 @@ namespace Map.DataGen
 
             //Set Height from Scale
             Vector3 scale;
-            scale.x = _size;
-            scale.y = _size;
+            scale.x = cellSize;
+            scale.y = cellSize;
             scale.z = hexHeight * ampliHeight + 0.1f;
-            _scales[countCell] = scale;
-        }
-
-        public HexagonCell CreateCell(int countCell, Transform parent)
-        {
-            if (Cells[countCell]) return Cells[countCell];
-            Cells[countCell] = Object.Instantiate(_prefab, parent);
-            //Cells[countCell].coordinates = _coords[countCell];
-
-            return Cells[countCell];
-        }
-
-        public void SetPosition(int countCell)
-        {
-            Cells[countCell].transform.localPosition = _positions[countCell];
-            Cells[countCell].transform.localScale = _scales[countCell];
+            Scales[countCell] = scale;
         }
     }
 }

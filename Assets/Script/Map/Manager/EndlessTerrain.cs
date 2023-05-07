@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Map.Coordinate;
 using Map.DataGen;
+using Map.Management;
 using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Map.Management
+namespace Map.Manager
 {
     public class EndlessTerrain : MonoBehaviour
     {
@@ -15,7 +15,6 @@ namespace Map.Management
         public Chunk chunk;
 
         private static Vector2 _viewerPosition;
-        private static MapGenerator _mapGenerator;
         private int _chunkSize;
         private int _chunkVisibleInViewDst;
 
@@ -25,11 +24,19 @@ namespace Map.Management
         //private static readonly Vector2 RealSize = new(110.8512517f, 96);
         //private static readonly Vector2 RealSize = new(55.42562586f, 48);
         private static readonly Vector2 RealSize = new(27.71281292f, 24);
+        
+        
+        private static MapGenerator _mapGenerator;
+        private static CellGenerator _cellGenerator;
 
+        private void Awake()
+        {
+            _mapGenerator = GameManager.Instance.mapGenerator;
+            _cellGenerator = GameManager.Instance.cellGenerator;
+        }
 
         private void Start()
         {
-            _mapGenerator = FindAnyObjectByType<MapGenerator>();
             _chunkSize = _mapGenerator.chunkSize;
             _chunkVisibleInViewDst = Mathf.RoundToInt(MaxViewDst / 64f);
         }
@@ -119,21 +126,24 @@ namespace Map.Management
 
         private class TerrainChunk
         {
-            private readonly Chunk _chunkObject;
+            private readonly Chunk _chunk;
+            private readonly ChunkCoordinates _coord;
             private Bounds _bounds;
 
             private MapData _mapData;
 
             public TerrainChunk(Vector2Int coord,Vector2 realSize, Transform parent, int chunkSize, Chunk chunkPrefab)
             {
+                _coord = ChunkCoordinates.Coord(coord.x,coord.y);
+                
                 var position = coord * realSize - realSize / 2;
                 _bounds = new Bounds(new Vector2(coord.x * realSize.x, coord.y * realSize.y), realSize);
                 _mapGenerator.RequestMapData(new Vector2(coord.x * chunkSize,-coord.y * chunkSize ), OnMapDataReceived);
                 
             
                 Vector3 positionV3 = new(position.x, 0.0f, position.y);
-                _chunkObject = Instantiate(chunkPrefab, positionV3, quaternion.identity, parent);
-                _chunkObject.Coordinates = ChunkCoordinates.Coord(coord.x, coord.y);
+                _chunk = Instantiate(chunkPrefab, positionV3, quaternion.identity, parent);
+                _chunk.Coordinates = ChunkCoordinates.Coord(coord.x, coord.y);
                 
                 SetVisible(false);   
             }
@@ -146,16 +156,24 @@ namespace Map.Management
 
             private void OnCellDataReceived(CellsData cellsData)
             {
-                for (var i = 0; i < cellsData.Cells.Length; i++)
+                var cell = new HexagonCell[cellsData.cellNumber];
+                
+                
+                for (var i = 0; i < cellsData.cellNumber; i++)
                 {
-                    var cell = cellsData.CreateCell(i, _chunkObject.transform);
-                    cell.GetComponent();
-                    cellsData.SetPosition(i);
-
-                    cell.RecoverMeshRenderer().sharedMaterial = _mapData.MaterialMap[i];
-                    var meshFilter = cell.RecoverMeshFilter();
-                    cell.AddComponent<MeshCollider>().sharedMesh = meshFilter.mesh;
+                    cell[i] = _cellGenerator.CreateCell(_chunk.transform);
+                    CalculateCellCoord(cellsData, i);
+                    lock (cell[i].GetComponent())
+                    {
+                        _cellGenerator.ApplyData(_mapData, cellsData, cell[i], i);
+                    }
                 }
+            }
+
+            private void CalculateCellCoord(CellsData data, int count)
+            {
+                var cellCoord = data.Coords[count];
+                data.Coords[count] = HexaCoordinates.FromChunkCoord(cellCoord.X, cellCoord.Z, _coord.X, _coord.Z);
             }
 
             public bool CheckDst()
@@ -166,12 +184,12 @@ namespace Map.Management
 
             public void SetVisible(bool visible)
             {
-                _chunkObject.gameObject.SetActive(visible);
+                _chunk.gameObject.SetActive(visible);
             }
 
             public bool IsVisible()
             {
-                return _chunkObject.gameObject.activeSelf;
+                return _chunk.gameObject.activeSelf;
             }
         }
     }
