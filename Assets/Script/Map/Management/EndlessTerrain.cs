@@ -34,48 +34,85 @@ namespace Map.Management
 
         private void Update()
         {
-            var position = viewer.position;
-            _viewerPosition = new Vector2(position.x, position.z);
+            ViewerPosToVector2();
+            
+            UpdateChunkVisibleLastFrame();
+            
             UpdateVisibleChunk();
         }
 
-        // ReSharper disable Unity.PerformanceAnalysis
+        private void ViewerPosToVector2()
+        {
+            var position = viewer.position;
+            _viewerPosition = new Vector2(position.x, position.z);
+        }
+        
         private void UpdateVisibleChunk()
         {
+            for (var yOffset = -_chunkVisibleInViewDst; yOffset <= _chunkVisibleInViewDst; yOffset++)
+            {
+                for (var xOffset = -_chunkVisibleInViewDst; xOffset < _chunkVisibleInViewDst; xOffset++)
+                {
+                    var chunkCoord = CreateChunkCoord(xOffset, yOffset);
+                    CheckChunk(chunkCoord);
+                }
+            }
+        }
 
+        private static Vector2 CreateChunkCoord(int xOffset, int yOffset)
+        {
+            var currentChunkCoordX = Mathf.RoundToInt(_viewerPosition.x / RealSize.x);
+            var currentChunkCoordY = Mathf.RoundToInt(_viewerPosition.y / RealSize.y);
+
+            var viewedChunkCoord = new Vector2(currentChunkCoordX - xOffset, currentChunkCoordY - yOffset);
+
+            return viewedChunkCoord;
+        }
+        
+
+        private void UpdateChunkVisibleLastFrame()
+        {
             foreach (var chunkVisibleLastUpdate in _terrainChunkVisibleLastUpdate.ToList().Where(chunkVisibleLastUpdate => !chunkVisibleLastUpdate.CheckDst()))
             {
                 chunkVisibleLastUpdate.SetVisible(false);
                 _terrainChunkVisibleLastUpdate.Remove(chunkVisibleLastUpdate);
             }
-
-        
-            var currentChunkCoordX = Mathf.RoundToInt(_viewerPosition.x / RealSize.x);
-            var currentChunkCoordY = Mathf.RoundToInt(_viewerPosition.y / RealSize.y);
-        
-            for (var yOffset = -_chunkVisibleInViewDst; yOffset <= _chunkVisibleInViewDst; yOffset++)
+        }
+        private void CheckChunk(Vector2 chunkCoord)
+        {
+            if (_terrainChunkDic.ContainsKey(chunkCoord))
             {
-
-                for (var xOffset = -_chunkVisibleInViewDst; xOffset < _chunkVisibleInViewDst; xOffset++)
+                EnableDisableChunk(chunkCoord);
+                
+                if (_terrainChunkDic[chunkCoord].IsVisible() &&
+                    !_terrainChunkVisibleLastUpdate.Contains(_terrainChunkDic[chunkCoord]))
                 {
-                    Vector2 viewedChunkCoord = new(currentChunkCoordX - xOffset, currentChunkCoordY - yOffset);
-                    if (_terrainChunkDic.ContainsKey(viewedChunkCoord))
-                    {
-                        _terrainChunkDic[viewedChunkCoord].SetVisible(_terrainChunkDic[viewedChunkCoord].CheckDst());
-                        if (_terrainChunkDic[viewedChunkCoord].IsVisible() &&
-                            !_terrainChunkVisibleLastUpdate.Contains(_terrainChunkDic[viewedChunkCoord]))
-                        {
-                            _terrainChunkVisibleLastUpdate.Add(_terrainChunkDic[viewedChunkCoord]);
-                        }
-                    }
-                    else
-                    {
-                        _terrainChunkDic.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord, RealSize, transform, _chunkSize));
-                    }
+                    AddChunkToList(chunkCoord);
                 }
+            }
+            else
+            {
+                AddChunkToDictionary(chunkCoord);
             }
         }
 
+        private void EnableDisableChunk(Vector2 chunkCoord)
+        {
+            _terrainChunkDic[chunkCoord].SetVisible(_terrainChunkDic[chunkCoord].CheckDst());
+        }
+
+
+        private void AddChunkToDictionary(Vector2 chunkCoord)
+        {
+            _terrainChunkDic.Add(chunkCoord, new TerrainChunk(chunkCoord, RealSize, transform, _chunkSize));
+        }
+
+        private void AddChunkToList(Vector2 chunkCoord)
+        {
+            _terrainChunkVisibleLastUpdate.Add(_terrainChunkDic[chunkCoord]);
+        }
+
+        
 
         private class TerrainChunk
         {

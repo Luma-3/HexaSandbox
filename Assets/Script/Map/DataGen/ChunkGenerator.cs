@@ -1,3 +1,4 @@
+using Map.Coordinate;
 using Script.Map;
 using UnityEngine;
 

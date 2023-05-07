@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Script.Map
+namespace Map.Coordinate
 {
     [System.Serializable]
     public struct HexaCoordinates
@@ -9,23 +9,11 @@ namespace Script.Map
         private int x, z;
 
 
-        public int X
-        {
-            get { return x;}
-        }
+        public int X => x;
 
-        public int Z
-        {
-            get { return z;}
-        }
+        public int Z => z;
 
-        public int Y
-        {
-            get
-            {
-                return -X - Z;
-            }
-        }
+        public int Y => -X - Z;
 
         public HexaCoordinates(int x, int z)
         {
