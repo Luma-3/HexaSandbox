@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Map.Coordinate;
 using Map.DataGen;
-using Map.Management;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -29,14 +28,11 @@ namespace Map.Manager
         private static MapGenerator _mapGenerator;
         private static CellGenerator _cellGenerator;
 
-        private void Awake()
+        private void Start()
         {
             _mapGenerator = GameManager.Instance.mapGenerator;
             _cellGenerator = GameManager.Instance.cellGenerator;
-        }
-
-        private void Start()
-        {
+            
             _chunkSize = _mapGenerator.chunkSize;
             _chunkVisibleInViewDst = Mathf.RoundToInt(MaxViewDst / 64f);
         }
@@ -143,6 +139,7 @@ namespace Map.Manager
             
                 Vector3 positionV3 = new(position.x, 0.0f, position.y);
                 _chunk = Instantiate(chunkPrefab, positionV3, quaternion.identity, parent);
+                _chunk.name = $"Chunk : {_coord}";
                 _chunk.Coordinates = ChunkCoordinates.Coord(coord.x, coord.y);
                 
                 SetVisible(false);   
@@ -150,16 +147,16 @@ namespace Map.Manager
 
             private void OnMapDataReceived(MapData data)
             {
-                _mapGenerator.RequestCellsData(data, OnCellDataReceived);
+                _mapGenerator.RequestCellsData(data, OnCellDataReceived,_coord);
                 _mapData = data;
             }
 
             private void OnCellDataReceived(CellsData cellsData)
             {
-                var cell = new HexagonCell[cellsData.cellNumber];
+                var cell = new HexagonCell[cellsData.CellNumber];
                 
                 
-                for (var i = 0; i < cellsData.cellNumber; i++)
+                for (var i = 0; i < cellsData.CellNumber; i++)
                 {
                     cell[i] = _cellGenerator.CreateCell(_chunk.transform);
                     CalculateCellCoord(cellsData, i);

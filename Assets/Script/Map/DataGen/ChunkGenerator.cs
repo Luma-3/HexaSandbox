@@ -1,16 +1,15 @@
+using Data;
 using Map.Coordinate;
-using Script.Map;
 using UnityEngine;
-using Vector2 = System.Numerics.Vector2;
 
 namespace Map.DataGen
 {
     public static class ChunkGenerator
     {
 
-        public static CellsData GenerateChunk(int size,float[,] noiseMap, float ampliHeight, AnimationCurve curve, HexagonCell hexaPrefab)
+        public static CellsData GenerateChunk(int size,float[,] noiseMap, BiomeData biome)
         {
-            AnimationCurve heightCurve = new(curve.keys);
+            AnimationCurve heightCurve = new(biome.heightCurve.keys);
             var width = noiseMap.GetLength(0);
             var height = noiseMap.GetLength(1);
 
@@ -25,7 +24,7 @@ namespace Map.DataGen
                     cellsData.CoordCell(i, x, y);
 
                     //Stock Position and height of the future cell
-                    cellsData.PositionCell(size,i++, x, y, noiseMap, ampliHeight, heightCurve);
+                    cellsData.PositionCell(size,i++, x, y, noiseMap, biome.amplificationHeight, heightCurve);
                 }
             }
             return cellsData;
@@ -34,7 +33,7 @@ namespace Map.DataGen
 
     public class CellsData
     {
-        public readonly int cellNumber;
+        public readonly int CellNumber;
         public readonly HexaCoordinates[] Coords;
         public readonly Vector3[] Positions;
         public readonly Vector3[] Scales;
@@ -43,7 +42,7 @@ namespace Map.DataGen
         public CellsData(int mapWidth, int mapHeight)
         {
             var chunkSize = mapWidth * mapHeight;
-            cellNumber = mapWidth * mapHeight;
+            CellNumber = mapWidth * mapHeight;
             Coords = new HexaCoordinates[chunkSize];
             Positions = new Vector3[chunkSize];
             Scales = new Vector3[chunkSize];

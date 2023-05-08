@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Data;
+using Map.Coordinate;
 using Map.DataGen;
 using UnityEngine;
 
-namespace Map.Management
+namespace Map.Manager
 {
     public class MapGenerator : MonoBehaviour
     {
 
         [Header("General")]
-        public HexagonCell cellPrefab;
         public int chunkSize;
         public int cellSize;
 
@@ -20,14 +21,14 @@ namespace Map.Management
         public int octaves;
         public float lacunarity;
         [Range(0.1f,1f)]public float persistence;
-        public float ampliHeight;
-        public AnimationCurve heightCurve;
+        public BiomeData biome;
         public int seed;
         public Vector2 offset;
 
         [Header("Biome")] 
         public int chunkBiomeSize;
         public int biomeSize;
+        public Vector2Int biomesOffset;
         
 
         public TerrainType[] regions;
@@ -57,10 +58,10 @@ namespace Map.Management
                     break;
                 case DrawMode.Mesh:
                     display.DrawChunk(
-                        mapData, ChunkGenerator.GenerateChunk(cellSize, mapData.NoiseMap, ampliHeight, heightCurve, cellPrefab));
+                        mapData, ChunkGenerator.GenerateChunk(cellSize, mapData.NoiseMap, biome));
                     break;
                 case DrawMode.BiomeMap:
-                    display.DrawTexture(TextureGenerator.TextureFromColour(mapData.BiomeMap,chunkBiomeSize,chunkBiomeSize));
+                    display.DrawTexture(TextureGenerator.TextureFromColour(mapData.BiomeColorMap,chunkBiomeSize,chunkBiomeSize));
                     break;
             }
         }
@@ -85,19 +86,19 @@ namespace Map.Management
 
         }
 
-        public void RequestCellsData (MapData mapData, Action<CellsData> callback)
+        public void RequestCellsData (MapData mapData, Action<CellsData> callback, ChunkCoordinates chunkCoordinates)
         {
             ThreadStart threadStart = delegate
             {
-                CellsDataThread(mapData, callback);
+                CellsDataThread(mapData, callback, chunkCoordinates);
             };
 
             new Thread(threadStart).Start();
         }
 
-        private void CellsDataThread(MapData mapData, Action<CellsData> callback)
+        private void CellsDataThread(MapData mapData, Action<CellsData> callback, ChunkCoordinates chunkCoordinates)
         {
-            var cellsData = ChunkGenerator.GenerateChunk(cellSize, mapData.NoiseMap, ampliHeight, heightCurve, cellPrefab);
+            var cellsData = ChunkGenerator.GenerateChunk(cellSize, mapData.NoiseMap, mapData.BiomeMap[Mathf.Abs(chunkCoordinates.Z * chunkBiomeSize + chunkCoordinates.X)]);
             lock (_cellsDataThreadInfosQueue)
             {
                 _cellsDataThreadInfosQueue.Enqueue(new MapThreadInfo<CellsData>(callback,cellsData));
@@ -129,33 +130,44 @@ namespace Map.Management
         private MapData GenerateMapData(Vector2 center)
         { 
             var noiseMap = Noise.GenerateNoiseMap(chunkSize, chunkSize, seed, noiseScale, octaves, persistence, lacunarity, center + offset, normalizeMode);
-            var biomeMap = VoronoiDiagram.GenerateDiagram(chunkBiomeSize, biomeSize, seed, biomes);
+            var biomesID = VoronoiDiagram.GenerateDiagram(chunkBiomeSize, biomeSize, seed, biomes, biomesOffset);
             
             var colourMap = new Color[chunkSize * chunkSize];
             var materials = new Material[chunkSize * chunkSize];
+            
+            var colourBiome = new Color[chunkBiomeSize * chunkBiomeSize];
+            var biomeMap = new BiomeData[chunkBiomeSize * chunkBiomeSize];
+            
             for (var y = 0; y < chunkSize; y++)
             {
                 for (var x = 0; x < chunkSize; x++)
                 {
-
                     var currentHeight = noiseMap[x, y];
                     for (var i = 0; i < regions.Length; i++)
                     {
-                        
-                        if(currentHeight >= regions[i].height)
+                        if (currentHeight >= regions[i].height)
                         {
                             colourMap[y * chunkSize + x] = regions[i].colour;
-                            materials[y * chunkSize + x] = regions[i].material; 
-                            
+                            materials[y * chunkSize + x] = regions[i].material;
                         }
-                        else
-                        {
-                            break;
-                        }
+                        else break;
                     }
                 }
             }
-            return new MapData(noiseMap, biomeMap, colourMap, materials);
+
+            for (var y = 0; y < chunkBiomeSize; y++)
+            {
+                for (var x = 0; x < chunkBiomeSize; x++)
+                {
+                    var currentBiome = biomesID[x * chunkBiomeSize + y];
+                    colourBiome[y * chunkBiomeSize + x] = biomes[currentBiome].colour;
+                    biomeMap[y * chunkBiomeSize + x] = biomes[currentBiome].biomeData;
+
+                }
+            }
+            
+            
+            return new MapData(noiseMap, biomeMap, colourBiome, colourMap, materials);
         }
 
 
@@ -194,21 +206,24 @@ namespace Map.Management
     {
         public string name;
         public Color colour;
+        public BiomeData biomeData;
     }
 
     public struct MapData
     {
         public readonly float[,] NoiseMap;
-        public readonly Color[] BiomeMap;
+        public readonly BiomeData[] BiomeMap;
+        public readonly Color[] BiomeColorMap;
         public readonly Color[] ColourMap;
         public readonly Material[] MaterialMap;
 
-        public MapData(float[,] noiseMap, Color[] biomeMap, Color[] colourMap, Material[] materialMap)
+        public MapData(float[,] noiseMap, BiomeData[] biomeMap, Color[] biomeColorMap, Color[] colourMap, Material[] materialMap)
         {
             NoiseMap = noiseMap;
+            BiomeMap = biomeMap;
             ColourMap = colourMap;
             MaterialMap = materialMap;
-            BiomeMap = biomeMap;
+            BiomeColorMap = biomeColorMap;
         }
     }
 }

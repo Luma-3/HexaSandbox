@@ -1,5 +1,5 @@
 using Map.DataGen;
-using Map.Management;
+using Map.Manager;
 using UnityEngine;
 
 namespace Map
@@ -21,8 +21,6 @@ namespace Map
             cell.coordinates = cellsData.Coords[count];
 
             cell.RecoverMeshRenderer().sharedMaterial = mapData.MaterialMap[count];
-            var meshFilter = cell.RecoverMeshFilter();
-            cell.gameObject.AddComponent<MeshCollider>().sharedMesh = meshFilter.mesh;
 
         }
 

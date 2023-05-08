@@ -1,26 +1,25 @@
-using Map.Management;
+using Map.Manager;
 using UnityEngine;
 
 namespace Map.DataGen
 {
     public static class VoronoiDiagram
     {
-        public static Color[] GenerateDiagram(int mapSize, int biomeSize, int seed, BiomeType[] biome)
+        public static int[] GenerateDiagram(int mapSize, int biomeSize, int seed, BiomeType[] biome, Vector2Int offset)
         {
-            var colour = new Color[biomeSize * biomeSize];
+            var id = new int[biomeSize * biomeSize];
             
             var pixelPerCell = mapSize / biomeSize;
-            var pointPos = GeneratePoints(biomeSize,pixelPerCell, seed, biome, colour);
-
+            var pointPos = GeneratePoints(biomeSize,pixelPerCell, seed, biome, id, offset);
             
-            var vonoroiColours = new Color[mapSize * mapSize];
+            var voronoiID = new int[mapSize * mapSize];
 
             for (var i = 0; i < mapSize; i++)
             {
                 for (var j = 0; j < mapSize; j++)
                 {
-                    var gridX = i / pixelPerCell;
-                    var gridY = j / pixelPerCell;
+                    var gridX = i / pixelPerCell + offset.x;
+                    var gridY = j / pixelPerCell + offset.y;
                     
                     var nearestDistance = Mathf.Infinity;
                     var nearestPoint = new Vector2Int();
@@ -28,8 +27,8 @@ namespace Map.DataGen
                     {
                         for (var b = -1; b < 2; b++)
                         {
-                            var x = gridX + a;
-                            var y = gridY + b;
+                            var x = gridX + a ;
+                            var y = gridY + b ;
                             
                             if (x < 0 || y < 0 || x >= biomeSize || y >= biomeSize) continue;
                             
@@ -40,18 +39,16 @@ namespace Map.DataGen
                                 nearestPoint = new Vector2Int(x, y);
                             }
                         }
-                        
-
-                        vonoroiColours[j * mapSize + i] = colour[nearestPoint.y * biomeSize + nearestPoint.x];
                     }
+                    voronoiID[j * mapSize + i] = id[nearestPoint.y * biomeSize + nearestPoint.x];
                 }
             }
 
-            return vonoroiColours;
+            return voronoiID;
         }
 
 
-        private static Vector2Int[,] GeneratePoints(int biomeSize, int pixelPerCell, int seed, BiomeType[] biome, Color[] colour)
+        private static Vector2Int[,] GeneratePoints(int biomeSize, int pixelPerCell, int seed, BiomeType[] biome, int[] id, Vector2Int offset)
         {
             var prng = new System.Random(seed);
             
@@ -60,10 +57,11 @@ namespace Map.DataGen
             {
                 for (var x = 0; x < biomeSize; x++)
                 {
-                    var rng = prng.Next(0, pixelPerCell);
-                    var rngColor = prng.Next(0, biome.Length);
-                    pointPos[y, x] = new Vector2Int(x * pixelPerCell + rng, y * pixelPerCell + rng);
-                    colour[y * biomeSize + x] = biome[rngColor].colour;
+                    var rngX = prng.Next(0, pixelPerCell) + offset.x;
+                    var rngY = prng.Next(0, pixelPerCell) + offset.y;
+                    var rngBiome = prng.Next(0, biome.Length);
+                    pointPos[y, x] = new Vector2Int(x * pixelPerCell + rngX, y * pixelPerCell + rngY);
+                    id[y * biomeSize + x] = biome[rngBiome].biomeData.id;
                 }
             }
             return pointPos;

@@ -1,5 +1,5 @@
 using Map.DataGen;
-using Map.Management;
+using Map.Manager;
 using UnityEngine;
 
 namespace Map
@@ -12,7 +12,7 @@ namespace Map
 
         private CellGenerator _cellGenerator;
 
-        private void Awake()
+        private void Start()
         {
             _cellGenerator = GameManager.Instance.cellGenerator;
         }
@@ -29,8 +29,8 @@ namespace Map
 
             _chunkObject = new GameObject("Terrain Chunk");
             
-            var cell = new HexagonCell[cellsData.cellNumber];
-            for (var i = 0; i < cellsData.cellNumber; i++)
+            var cell = new HexagonCell[cellsData.CellNumber];
+            for (var i = 0; i < cellsData.CellNumber; i++)
             {
                 cell[i] = _cellGenerator.CreateCell(_chunkObject.transform);
                 _cellGenerator.ApplyData(mapData, cellsData, cell[i], i);

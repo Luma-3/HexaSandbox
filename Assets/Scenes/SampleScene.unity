@@ -918,6 +918,7 @@ GameObject:
   - component: {fileID: 822348440}
   - component: {fileID: 822348439}
   - component: {fileID: 822348442}
+  - component: {fileID: 822348443}
   m_Layer: 0
   m_Name: MapGenerator
   m_TagString: Untagged
@@ -950,7 +951,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e86a62a6fd3c546469c2fc54dc785d91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellPrefab: {fileID: 38057688937619892, guid: 51e767a9ec1ed27428c79d92d22851b9, type: 3}
   chunkSize: 8
   cellSize: 2
   normalizeMode: 1
@@ -958,89 +958,12 @@ MonoBehaviour:
   octaves: 4
   lacunarity: 2.63
   persistence: 0.25
-  ampliHeight: 42.37
-  heightCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 0.24661845
-      value: 0.10590769
-      inSlope: 0.38326916
-      outSlope: 0.38326916
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.47113913
-    - serializedVersion: 3
-      time: 0.39906263
-      value: 0.17038319
-      inSlope: 0.37348402
-      outSlope: 0.37348402
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.6255039
-    - serializedVersion: 3
-      time: 0.49743742
-      value: 0.2131547
-      inSlope: 0.43493116
-      outSlope: 0.43493116
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.18646514
-      outWeight: 0.431576
-    - serializedVersion: 3
-      time: 0.7006325
-      value: 0.32890546
-      inSlope: 0.5467788
-      outSlope: 0.5467788
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.9403186
-      outWeight: 0.103359036
-    - serializedVersion: 3
-      time: 0.853027
-      value: 0.49579662
-      inSlope: 0.8028431
-      outSlope: 0.8028431
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.950721
-      value: 0.72453773
-      inSlope: 1.17592
-      outSlope: 1.17592
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1.3975002
-      value: 1.4886136
-      inSlope: 2.5006948
-      outSlope: 2.5006948
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.0829572
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  seed: 41
+  biome: {fileID: 0}
+  seed: -605
   offset: {x: 0, y: 0}
   chunkBiomeSize: 512
-  biomeSize: 8
+  biomeSize: 32
+  biomesOffset: {x: 0, y: 0}
   regions:
   - name: Deep Water
     height: 0
@@ -1077,14 +1000,10 @@ MonoBehaviour:
   biomes:
   - name: Plaine
     colour: {r: 0.20984742, g: 0.9245283, b: 0.17007834, a: 0}
-  - name: zefzfze
-    colour: {r: 0.4811321, g: 0.093049124, b: 0.27406552, a: 0}
-  - name: adzd
-    colour: {r: 0.8867924, g: 0.8701875, b: 0.04601282, a: 0}
-  - name: gegerg
-    colour: {r: 0.047058843, g: 0.24328102, b: 0.8862745, a: 0}
-  - name: uyk
-    colour: {r: 0.78039217, g: 0.24328102, b: 0.8862745, a: 0}
+    biomeData: {fileID: 11400000, guid: 84a7018e89fad56449416cb17a4ada6b, type: 2}
+  - name: Montaine
+    colour: {r: 0.9333334, g: 0.9333334, b: 0.9333334, a: 0}
+    biomeData: {fileID: 11400000, guid: daec87e417e0f084cb715de3eb569dbe, type: 2}
   drawMode: 3
   autoUpdate: 1
 --- !u!4 &822348441
@@ -1116,6 +1035,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   viewer: {fileID: 427470664}
+  chunk: {fileID: 7410511272036050934, guid: 2fa23b2f54d103642ace514a3233af97, type: 3}
+--- !u!114 &822348443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 822348438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70e377b3a43f4e0db19238b1ba95272b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cellPrefab: {fileID: 38057688937619892, guid: 51e767a9ec1ed27428c79d92d22851b9, type: 3}
 --- !u!1 &851854869 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8594808268658528295, guid: 51e767a9ec1ed27428c79d92d22851b9, type: 3}
@@ -1278,7 +1211,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!23 &1277076737
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1286,7 +1219,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1277076735}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1376,6 +1309,53 @@ Transform:
   - {fileID: 646452336}
   m_Father: {fileID: 427470664}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1395014576
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1395014578}
+  - component: {fileID: 1395014577}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1395014577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1395014576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 084d1957cbccbb74caa2c3c6b87af8c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mapGenerator: {fileID: 822348440}
+  endlessTerrain: {fileID: 822348442}
+  cellGenerator: {fileID: 822348443}
+--- !u!4 &1395014578
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1395014576}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.3045087, y: -203.05344, z: 6.927199}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1637237090
 GameObject:
